@@ -1,0 +1,799 @@
+{
+  "intake": {
+    "user_id": "11111111-1111-4111-8111-111111111111",
+    "answers": {
+      "age": 25,
+      "sex": "male",
+      "weight_kg": 70,
+      "height_cm": 175,
+      "goal": "muscle_gain",
+      "recomp_priority": "balanced",
+      "work": "desk",
+      "steps": "medium",
+      "experience": "intermediate",
+      "workout_days": 4,
+      "session_minutes": 60,
+      "equipment": "gym",
+      "diet": "veg",
+      "meals": 4,
+      "allergies": [],
+      "health_review": false,
+      "pregnant_or_lactating": false,
+      "eating_concern": false,
+      "exercise_red_flags": false,
+      "consent": true
+    },
+    "estimates": {
+      "policy_version": "hulk-nutrition-1.0.0",
+      "kind": "estimate",
+      "flags": [],
+      "bmi": 22.9,
+      "confidence": "provisional",
+      "rmr_kcal": 1674,
+      "activity_factor": 1.5,
+      "maintenance_kcal": 2511,
+      "adjustment_percent": 5,
+      "calories_kcal": 2650,
+      "protein_g": 140,
+      "fat_g": 74,
+      "carbs_g": 356,
+      "fibre_g": 37.1
+    },
+    "revision": "22222222-2222-4222-8222-222222222222",
+    "review_status": "approved",
+    "members": {
+      "full_name": "Synthetic Demo Member"
+    }
+  },
+  "nutrition": {
+    "user_id": "11111111-1111-4111-8111-111111111111",
+    "intake_revision": "22222222-2222-4222-8222-222222222222",
+    "targets": {
+      "policy_version": "hulk-nutrition-1.0.0",
+      "kind": "estimate",
+      "flags": [],
+      "bmi": 22.9,
+      "confidence": "provisional",
+      "rmr_kcal": 1674,
+      "activity_factor": 1.5,
+      "maintenance_kcal": 2511,
+      "adjustment_percent": 5,
+      "calories_kcal": 2650,
+      "protein_g": 140,
+      "fat_g": 74,
+      "carbs_g": 356,
+      "fibre_g": 37.1
+    },
+    "approved_at": "2026-10-13T19:00:00+00:00"
+  },
+  "plan": {
+    "policy_version": "hulk-plans-1.0.0",
+    "food_version": "hulk-foods-1.0.0",
+    "exercise_version": "hulk-exercises-1.0.0",
+    "intake_revision": "22222222-2222-4222-8222-222222222222",
+    "nutrition_approved_at": "2026-10-13T19:00:00+00:00",
+    "kind": "complete",
+    "workout": {
+      "kind": "program",
+      "name": "HULK FIT Transformation",
+      "equipment": "gym",
+      "home_mode": null,
+      "goal": "muscle_gain",
+      "experience": "intermediate",
+      "available_minutes": 60,
+      "requested_days": 4,
+      "strength_days": 4,
+      "sessions": [
+        {
+          "day": 0,
+          "kind": "strength",
+          "type": "upper",
+          "estimated_minutes": 43,
+          "warmup_minutes": 5,
+          "cooldown_minutes": 2,
+          "exercises": [
+            {
+              "id": "db_bench",
+              "pattern": "push",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "cable_row",
+              "pattern": "pull",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "db_press",
+              "pattern": "shoulder",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "lat_pull",
+              "pattern": "pull_alt",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "curl",
+              "pattern": "arm",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "deadbug",
+              "pattern": "core",
+              "sets": 3,
+              "reps": "6–10 / side",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            }
+          ]
+        },
+        {
+          "day": 1,
+          "kind": "strength",
+          "type": "lower",
+          "estimated_minutes": 37,
+          "warmup_minutes": 5,
+          "cooldown_minutes": 2,
+          "exercises": [
+            {
+              "id": "leg_press",
+              "pattern": "squat",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "db_rdl",
+              "pattern": "hinge",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "split_squat",
+              "pattern": "single_leg",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "calf",
+              "pattern": "calf",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "deadbug",
+              "pattern": "core",
+              "sets": 3,
+              "reps": "6–10 / side",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            }
+          ]
+        },
+        {
+          "day": 2,
+          "kind": "rest"
+        },
+        {
+          "day": 3,
+          "kind": "strength",
+          "type": "upper",
+          "estimated_minutes": 43,
+          "warmup_minutes": 5,
+          "cooldown_minutes": 2,
+          "exercises": [
+            {
+              "id": "db_bench",
+              "pattern": "push",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "cable_row",
+              "pattern": "pull",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "db_press",
+              "pattern": "shoulder",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "lat_pull",
+              "pattern": "pull_alt",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "curl",
+              "pattern": "arm",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "deadbug",
+              "pattern": "core",
+              "sets": 3,
+              "reps": "6–10 / side",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            }
+          ]
+        },
+        {
+          "day": 4,
+          "kind": "strength",
+          "type": "lower",
+          "estimated_minutes": 37,
+          "warmup_minutes": 5,
+          "cooldown_minutes": 2,
+          "exercises": [
+            {
+              "id": "leg_press",
+              "pattern": "squat",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "db_rdl",
+              "pattern": "hinge",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "split_squat",
+              "pattern": "single_leg",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "calf",
+              "pattern": "calf",
+              "sets": 3,
+              "reps": "8–12",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            },
+            {
+              "id": "deadbug",
+              "pattern": "core",
+              "sets": 3,
+              "reps": "6–10 / side",
+              "rest_seconds": 90,
+              "reps_in_reserve": 2
+            }
+          ]
+        },
+        {
+          "day": 5,
+          "kind": "rest"
+        },
+        {
+          "day": 6,
+          "kind": "rest"
+        }
+      ],
+      "notes": []
+    },
+    "meals": {
+      "kind": "matched",
+      "diet": "veg",
+      "meals_per_day": 4,
+      "targets": {
+        "policy_version": "hulk-nutrition-1.0.0",
+        "kind": "estimate",
+        "flags": [],
+        "bmi": 22.9,
+        "confidence": "provisional",
+        "rmr_kcal": 1674,
+        "activity_factor": 1.5,
+        "maintenance_kcal": 2511,
+        "adjustment_percent": 5,
+        "calories_kcal": 2650,
+        "protein_g": 140,
+        "fat_g": 74,
+        "carbs_g": 356,
+        "fibre_g": 37.1
+      },
+      "tolerance": {
+        "calories_kcal": 132.5,
+        "protein_g": 14,
+        "fat_g": 7.4,
+        "carbs_g": 35.6
+      },
+      "menus": [
+        {
+          "id": "A",
+          "meals": [
+            {
+              "slot": "breakfast",
+              "recipe": "poha_plate",
+              "ingredients": [
+                {
+                  "food_id": "poha",
+                  "grams": 95
+                },
+                {
+                  "food_id": "curd",
+                  "grams": 200
+                },
+                {
+                  "food_id": "tofu",
+                  "grams": 111
+                }
+              ],
+              "totals": {
+                "calories_kcal": 617.9,
+                "protein_g": 33.2,
+                "fat_g": 17.3,
+                "carbs_g": 82.8,
+                "fibre_g": 5.8
+              }
+            },
+            {
+              "slot": "lunch",
+              "recipe": "dal_plate",
+              "ingredients": [
+                {
+                  "food_id": "rice",
+                  "grams": 100
+                },
+                {
+                  "food_id": "lentil",
+                  "grams": 30
+                },
+                {
+                  "food_id": "carrot",
+                  "grams": 75
+                },
+                {
+                  "food_id": "spinach",
+                  "grams": 50
+                },
+                {
+                  "food_id": "tomato",
+                  "grams": 37.5
+                },
+                {
+                  "food_id": "tofu",
+                  "grams": 129.5
+                },
+                {
+                  "food_id": "paneer",
+                  "grams": 20
+                }
+              ],
+              "totals": {
+                "calories_kcal": 744.8,
+                "protein_g": 43.4,
+                "fat_g": 17.8,
+                "carbs_g": 101.5,
+                "fibre_g": 13.8
+              }
+            },
+            {
+              "slot": "snack",
+              "recipe": "fruit_dairy",
+              "ingredients": [
+                {
+                  "food_id": "banana",
+                  "grams": 190
+                },
+                {
+                  "food_id": "curd",
+                  "grams": 200
+                },
+                {
+                  "food_id": "milk",
+                  "grams": 300
+                }
+              ],
+              "totals": {
+                "calories_kcal": 540.5,
+                "protein_g": 19.1,
+                "fat_g": 20.6,
+                "carbs_g": 69,
+                "fibre_g": 3.7
+              }
+            },
+            {
+              "slot": "dinner",
+              "recipe": "dal_plate",
+              "ingredients": [
+                {
+                  "food_id": "rice",
+                  "grams": 100
+                },
+                {
+                  "food_id": "lentil",
+                  "grams": 30
+                },
+                {
+                  "food_id": "carrot",
+                  "grams": 75
+                },
+                {
+                  "food_id": "spinach",
+                  "grams": 50
+                },
+                {
+                  "food_id": "tomato",
+                  "grams": 37.5
+                },
+                {
+                  "food_id": "tofu",
+                  "grams": 129.5
+                },
+                {
+                  "food_id": "paneer",
+                  "grams": 20
+                }
+              ],
+              "totals": {
+                "calories_kcal": 744.8,
+                "protein_g": 43.4,
+                "fat_g": 17.8,
+                "carbs_g": 101.5,
+                "fibre_g": 13.8
+              }
+            }
+          ],
+          "totals": {
+            "calories_kcal": 2648.1,
+            "protein_g": 139.1,
+            "fat_g": 73.3,
+            "carbs_g": 354.8,
+            "fibre_g": 37.2
+          },
+          "deltas": {
+            "calories_kcal": -1.9,
+            "protein_g": -0.9,
+            "fat_g": -0.7,
+            "carbs_g": -1.2
+          },
+          "shopping": [
+            {
+              "food_id": "rice",
+              "grams": 200
+            },
+            {
+              "food_id": "poha",
+              "grams": 95
+            },
+            {
+              "food_id": "lentil",
+              "grams": 60
+            },
+            {
+              "food_id": "carrot",
+              "grams": 150
+            },
+            {
+              "food_id": "spinach",
+              "grams": 100
+            },
+            {
+              "food_id": "tomato",
+              "grams": 75
+            },
+            {
+              "food_id": "banana",
+              "grams": 190
+            },
+            {
+              "food_id": "curd",
+              "grams": 400
+            },
+            {
+              "food_id": "milk",
+              "grams": 300
+            },
+            {
+              "food_id": "tofu",
+              "grams": 370
+            },
+            {
+              "food_id": "paneer",
+              "grams": 40
+            }
+          ]
+        },
+        {
+          "id": "B",
+          "meals": [
+            {
+              "slot": "breakfast",
+              "recipe": "ragi_plate",
+              "ingredients": [
+                {
+                  "food_id": "ragi",
+                  "grams": 25
+                },
+                {
+                  "food_id": "curd",
+                  "grams": 200
+                },
+                {
+                  "food_id": "tofu",
+                  "grams": 120
+                }
+              ],
+              "totals": {
+                "calories_kcal": 375,
+                "protein_g": 29.5,
+                "fat_g": 17.4,
+                "carbs_g": 26.6,
+                "fibre_g": 5.6
+              }
+            },
+            {
+              "slot": "lunch",
+              "recipe": "dal_plate",
+              "ingredients": [
+                {
+                  "food_id": "rice",
+                  "grams": 140
+                },
+                {
+                  "food_id": "lentil",
+                  "grams": 20
+                },
+                {
+                  "food_id": "carrot",
+                  "grams": 75
+                },
+                {
+                  "food_id": "spinach",
+                  "grams": 50
+                },
+                {
+                  "food_id": "tomato",
+                  "grams": 37.5
+                },
+                {
+                  "food_id": "tofu",
+                  "grams": 140
+                },
+                {
+                  "food_id": "paneer",
+                  "grams": 17.5
+                }
+              ],
+              "totals": {
+                "calories_kcal": 862.6,
+                "protein_g": 45.5,
+                "fat_g": 18.2,
+                "carbs_g": 127.5,
+                "fibre_g": 14.2
+              }
+            },
+            {
+              "slot": "snack",
+              "recipe": "fruit_dairy",
+              "ingredients": [
+                {
+                  "food_id": "banana",
+                  "grams": 205
+                },
+                {
+                  "food_id": "curd",
+                  "grams": 200
+                },
+                {
+                  "food_id": "milk",
+                  "grams": 300
+                }
+              ],
+              "totals": {
+                "calories_kcal": 556.3,
+                "protein_g": 19.2,
+                "fat_g": 20.6,
+                "carbs_g": 72.6,
+                "fibre_g": 4
+              }
+            },
+            {
+              "slot": "dinner",
+              "recipe": "dal_plate",
+              "ingredients": [
+                {
+                  "food_id": "rice",
+                  "grams": 140
+                },
+                {
+                  "food_id": "lentil",
+                  "grams": 20
+                },
+                {
+                  "food_id": "carrot",
+                  "grams": 75
+                },
+                {
+                  "food_id": "spinach",
+                  "grams": 50
+                },
+                {
+                  "food_id": "tomato",
+                  "grams": 37.5
+                },
+                {
+                  "food_id": "tofu",
+                  "grams": 140
+                },
+                {
+                  "food_id": "paneer",
+                  "grams": 17.5
+                }
+              ],
+              "totals": {
+                "calories_kcal": 862.6,
+                "protein_g": 45.5,
+                "fat_g": 18.2,
+                "carbs_g": 127.5,
+                "fibre_g": 14.2
+              }
+            }
+          ],
+          "totals": {
+            "calories_kcal": 2656.5,
+            "protein_g": 139.8,
+            "fat_g": 74.4,
+            "carbs_g": 354.2,
+            "fibre_g": 37.8
+          },
+          "deltas": {
+            "calories_kcal": 6.5,
+            "protein_g": -0.2,
+            "fat_g": 0.4,
+            "carbs_g": -1.8
+          },
+          "shopping": [
+            {
+              "food_id": "rice",
+              "grams": 280
+            },
+            {
+              "food_id": "ragi",
+              "grams": 25
+            },
+            {
+              "food_id": "lentil",
+              "grams": 40
+            },
+            {
+              "food_id": "carrot",
+              "grams": 150
+            },
+            {
+              "food_id": "spinach",
+              "grams": 100
+            },
+            {
+              "food_id": "tomato",
+              "grams": 75
+            },
+            {
+              "food_id": "banana",
+              "grams": 205
+            },
+            {
+              "food_id": "curd",
+              "grams": 400
+            },
+            {
+              "food_id": "milk",
+              "grams": 300
+            },
+            {
+              "food_id": "tofu",
+              "grams": 400
+            },
+            {
+              "food_id": "paneer",
+              "grams": 35
+            }
+          ]
+        }
+      ],
+      "weekly_rotation": [
+        "A",
+        "B",
+        "A",
+        "B",
+        "A",
+        "B",
+        "A"
+      ],
+      "shopping": [
+        {
+          "food_id": "rice",
+          "grams": 1640
+        },
+        {
+          "food_id": "poha",
+          "grams": 380
+        },
+        {
+          "food_id": "lentil",
+          "grams": 360
+        },
+        {
+          "food_id": "carrot",
+          "grams": 1050
+        },
+        {
+          "food_id": "spinach",
+          "grams": 700
+        },
+        {
+          "food_id": "tomato",
+          "grams": 525
+        },
+        {
+          "food_id": "banana",
+          "grams": 1375
+        },
+        {
+          "food_id": "curd",
+          "grams": 2800
+        },
+        {
+          "food_id": "milk",
+          "grams": 2100
+        },
+        {
+          "food_id": "tofu",
+          "grams": 2680
+        },
+        {
+          "food_id": "paneer",
+          "grams": 265
+        },
+        {
+          "food_id": "ragi",
+          "grams": 75
+        }
+      ]
+    }
+  }
+}

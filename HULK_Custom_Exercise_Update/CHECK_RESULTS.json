@@ -1,0 +1,32 @@
+{
+  "automated_tests": {
+    "passed": 49,
+    "failed": 0,
+    "skipped": 0
+  },
+  "actual_database_tests": {
+    "passed": 12,
+    "failed": 0,
+    "synthetic_data": "All rolled back; zero remaining synthetic users/staff/members"
+  },
+  "installer_and_integrity_checks": [
+    "installs all 10 source files",
+    "preserves all 11 protected dependencies",
+    "backs up 8 previous files and records 2 new paths",
+    "idempotent installation",
+    "newer source stops before any write",
+    "changed protected dependency blocks installation",
+    "all packaged JavaScript syntax checks passed",
+    "frontend/backend custom definition and builder bytes match"
+  ],
+  "backend": {
+    "function": "fitness-library",
+    "version": 3,
+    "status": "ACTIVE",
+    "verify_jwt": true,
+    "readback_files_matched": 8,
+    "unauthenticated_http_status": 401
+  },
+  "browser_qa": "Not performed here. Run VALIDATION.md in Antigravity before Hosting deployment.",
+  "firebase_hosting_deployed": false
+}

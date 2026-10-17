@@ -1,0 +1,18 @@
+{
+  "project_id": "iufsxnlonwnylqerwafs",
+  "function": "fitness-library",
+  "status": "ACTIVE",
+  "version": 3,
+  "verify_jwt": true,
+  "ezbr_sha256": "09a4dd93339248d717c4363665e5fb7c6f2f579611b847c1a38d5a739c1fa20b",
+  "source_files_verified": 8,
+  "changed_files": [
+    "_shared/custom-exercises.mjs",
+    "_shared/studio-program-engine.mjs"
+  ],
+  "schema_changes": 0,
+  "live_frontend_deployed": false,
+  "other_functions_preserved": true,
+  "synthetic_database_checks": 12,
+  "synthetic_data": "All transaction test records rolled back; remaining synthetic users/staff/members = 0"
+}

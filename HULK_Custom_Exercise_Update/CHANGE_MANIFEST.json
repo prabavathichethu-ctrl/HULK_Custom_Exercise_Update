@@ -1,0 +1,101 @@
+{
+  "version": "hulk-manual-exercises-20261016",
+  "files": [
+    {
+      "path": "public/assets/admin-coaching.js",
+      "before_sha256": "7dc9db56b42ae06a9dd5df54eebeb7361440bdfea593cecdde6bbe2e7afc35e5",
+      "after_sha256": "7faf2089d80d3db34428588f2d3d36f46be0869940c51ac02c9452ddc2739f40"
+    },
+    {
+      "path": "public/assets/custom-exercises.mjs",
+      "before_sha256": null,
+      "after_sha256": "db7c69cf5c34daece122ca152a473ecfa0f752f84eac0f4b9f3c4ffcfbff3756"
+    },
+    {
+      "path": "public/assets/plan-review.mjs",
+      "before_sha256": "c1ef99bf1ff7ee5907c8edb5ee1a5a5f8e32df4546830cc6482ad1e5b1abcf4c",
+      "after_sha256": "a91e442f62ed8b23c66311bf00d74a0c3c38c9c66e40060a15545fe1ab68d8d8"
+    },
+    {
+      "path": "public/assets/plan-ui.mjs",
+      "before_sha256": "ee37e15cd040f64db518682018f5d8a6f5ddaef84f4413f59c309c865cdeb315",
+      "after_sha256": "9860ef1850e0a2f613e572346b17c2a0d7c04fb69a7607cef2af9cb60bf7a6d6"
+    },
+    {
+      "path": "public/assets/plan.mjs",
+      "before_sha256": "0530abc1398e4407cbae90afa0bea70857dddb32ec2db3ef98924bf0f887b104",
+      "after_sha256": "60640662e1a09a4cb06b7e00ef42d5cbfd75d56040a78a70e917dd3a85dbaf50"
+    },
+    {
+      "path": "public/assets/studio-library.mjs",
+      "before_sha256": "50b26090198e4f3463cab7a4780bf1463b7d6e178b5e93cc9b98aca3b92931b7",
+      "after_sha256": "eaa1ce60fc0584f5f6f9295e0ce742adbf399cc9ec4270a606d116a48409f69b"
+    },
+    {
+      "path": "public/assets/studio-program-engine.mjs",
+      "before_sha256": "a98857194ac57547af3cda3ae830545e804e3fdf20e3c49cc0d8b487ced51f14",
+      "after_sha256": "c8f76086d660b1c1b6bb8eab9d4ef0927b034e5c73c12358a25ce377fc04ca08"
+    },
+    {
+      "path": "public/assets/studio.mjs",
+      "before_sha256": "5c69a6abe1d620baea6c77b1173da302c6bb06a482905550109a2d09d916a6be",
+      "after_sha256": "dbe2f13c117248cf649bdb007c444a87c2b7557b174b91653336eeaba8045ad6"
+    },
+    {
+      "path": "supabase/functions/_shared/studio-program-engine.mjs",
+      "before_sha256": "a98857194ac57547af3cda3ae830545e804e3fdf20e3c49cc0d8b487ced51f14",
+      "after_sha256": "c8f76086d660b1c1b6bb8eab9d4ef0927b034e5c73c12358a25ce377fc04ca08"
+    },
+    {
+      "path": "supabase/functions/_shared/custom-exercises.mjs",
+      "before_sha256": null,
+      "after_sha256": "db7c69cf5c34daece122ca152a473ecfa0f752f84eac0f4b9f3c4ffcfbff3756"
+    }
+  ],
+  "protected_dependencies": [
+    {
+      "path": "public/assets/muscle-map.js",
+      "sha256": "5b44fb765a8eec2b6aa7f7cd3a5f8abe96e2f0f8bd2d2e0f498c965113376243"
+    },
+    {
+      "path": "public/assets/exercise-catalog.mjs",
+      "sha256": "f987da0f217943761b355c4b2dcfb8b3954dac3f31e3714b4b275e3003e6e41e"
+    },
+    {
+      "path": "public/assets/food-catalog.mjs",
+      "sha256": "e2640fae6f9d96d68065d5870346e8e46f0bd1de439235435007efd1714cf374"
+    },
+    {
+      "path": "public/assets/plan-engine.mjs",
+      "sha256": "0b95b1c29918d5885829bab9521294e6eaf2801fa1593ba6daa5cd8519f928ae"
+    },
+    {
+      "path": "public/assets/nutrition.mjs",
+      "sha256": "cb81bc2494091cfcddc72b06be2228de82c1de9576a1fab25c0c3bc0f9f6450c"
+    },
+    {
+      "path": "supabase/functions/_shared/exercise-catalog.mjs",
+      "sha256": "f987da0f217943761b355c4b2dcfb8b3954dac3f31e3714b4b275e3003e6e41e"
+    },
+    {
+      "path": "supabase/functions/_shared/food-catalog.mjs",
+      "sha256": "e2640fae6f9d96d68065d5870346e8e46f0bd1de439235435007efd1714cf374"
+    },
+    {
+      "path": "supabase/functions/_shared/nutrition.mjs",
+      "sha256": "cb81bc2494091cfcddc72b06be2228de82c1de9576a1fab25c0c3bc0f9f6450c"
+    },
+    {
+      "path": "supabase/functions/_shared/plan-engine.mjs",
+      "sha256": "0b95b1c29918d5885829bab9521294e6eaf2801fa1593ba6daa5cd8519f928ae"
+    },
+    {
+      "path": "supabase/functions/fitness-library/handler.mjs",
+      "sha256": "7caf436d6cd15719a17a198e44619c3ca1c7c8e4651a837d14c02ae6bbc2e659"
+    },
+    {
+      "path": "supabase/functions/fitness-library/index.ts",
+      "sha256": "320a51d0181bed8347daebdb09618506b9139b01fe0607c4e4e29512a2118095"
+    }
+  ]
+}

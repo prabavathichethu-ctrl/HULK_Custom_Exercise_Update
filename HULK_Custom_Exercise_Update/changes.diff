@@ -1,0 +1,267 @@
+--- a/public/assets/admin-coaching.js
++++ b/public/assets/admin-coaching.js
+@@ -31,7 +31,7 @@
+ function createService(HF,providedModels){
+ var models=null;
+ async function authorize(){if(await HF.myRole()!=='owner')throw new Error('owner_required');}
+-async function model(){if(!models)models=providedModels||await Promise.all([import('/assets/plan-engine.mjs'),import('/assets/plan-ui.mjs')]).then(function(x){return {currentPlan:x[0].currentPlan,planHTML:x[1].planHTML,days:x[1].days,ptext:x[1].ptext};});return models;}
++async function model(){if(!models)models=providedModels||await Promise.all([import('/assets/plan-engine.mjs'),import('/assets/plan-ui.mjs?v=coach-exercises-20261016')]).then(function(x){return {currentPlan:x[0].currentPlan,planHTML:x[1].planHTML,days:x[1].days,ptext:x[1].ptext};});return models;}
+ async function query(table,columns,ids){var r=await HF.sb.from(table).select(columns).in('user_id',ids);if(r.error)throw new Error('unavailable');return r.data||[];}
+ async function one(table,columns,uid){var r=await HF.sb.from(table).select(columns).eq('user_id',uid).maybeSingle();if(r.error)throw new Error('unavailable');return r.data||null;}
+ var intakeColumns='user_id,revision,review_status,submitted_at,reviewed_at,goal:answers->>goal,diet:answers->>diet';
+--- a/public/assets/custom-exercises.mjs
++++ b/public/assets/custom-exercises.mjs
+@@ -0,0 +1,43 @@
++import {EXERCISES} from './exercise-catalog.mjs';
++
++export const CUSTOM_EXERCISE_VERSION='hulk-coach-exercise-1.0.0';
++export const CUSTOM_ID=/^custom_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
++export const MUSCLE_IDS=Object.freeze(['chest','front_delts','side_delts','rear_delts','lats','upper_back','lower_back','biceps','triceps','forearms','rotator_cuff','core','obliques','serratus','quads','hamstrings','glutes','adductors','calves','hip_flexors']);
++export const EQUIPMENT=Object.freeze(['gym','dumbbell','band','bodyweight']);
++const roles=['primary','secondary','stabilisers'];
++const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
++const text=(v,min,max)=>typeof v==='string'&&v.trim().length>=min&&v.length<=max;
++function fail(){const e=new Error('custom_exercise_fields');e.code=e.message;throw e;}
++export function newCustomDefinition(){return {version:CUSTOM_EXERCISE_VERSION,en:'',kn:'',equipment:'',cues:{en:[],kn:[]},muscles:{primary:[],secondary:[],stabilisers:[]}};}
++export function validateExerciseDefinition(entry,strict=true){
++ if(!object(entry))fail();
++ if(Object.hasOwn(EXERCISES,entry.id)){if(entry.custom!==undefined)fail();return EXERCISES[entry.id];}
++ if(!CUSTOM_ID.test(entry.id||'')||!object(entry.custom))fail();
++ const c=entry.custom;
++ if(c.version!==CUSTOM_EXERCISE_VERSION||!text(c.en,strict?2:0,120)||!text(c.kn,0,120)||(!EQUIPMENT.includes(c.equipment)&&(strict||c.equipment!=='')))fail();
++ if(Object.keys(c).some(k=>!['version','en','kn','equipment','cues','muscles'].includes(k))||!object(c.cues)||!object(c.muscles))fail();
++ for(const lang of ['en','kn'])if(!Array.isArray(c.cues[lang])||c.cues[lang].length>6||c.cues[lang].some(s=>!text(s,1,300)))fail();
++ for(const role of roles){const group=c.muscles[role];if(!Array.isArray(group)||group.length>6||(strict&&role==='primary'&&!group.length)||group.some(k=>!MUSCLE_IDS.includes(k)))fail();}
++ const all=roles.flatMap(role=>c.muscles[role]);if(new Set(all).size!==all.length)fail();
++ if(JSON.stringify(c).length>8000)fail();
++ return c;
++}
++export function copyCustomDefinition(c){return {version:CUSTOM_EXERCISE_VERSION,en:c.en.trim(),kn:c.kn.trim(),equipment:c.equipment,cues:{en:[...c.cues.en],kn:[...c.cues.kn]},muscles:Object.fromEntries(roles.map(role=>[role,[...c.muscles[role]]]))};}
++export function definitionForView(entry){
++ if(Object.hasOwn(EXERCISES,entry?.id))return EXERCISES[entry.id];
++ try{return validateExerciseDefinition(entry,true);}catch{return {en:'Exercise · coach review needed',kn:'ವ್ಯಾಯಾಮ · ಕೋಚ್ ಪರಿಶೀಲನೆ ಬೇಕು',equipment:'',cues:{en:[],kn:[]}};}
++}
++const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
++export function muscleLabel(id,lang){const labels=globalThis.HULK_MUSCLES?.labels?.[id];return labels?labels[lang==='kn'?1:0]:id.replaceAll('_',' ');}
++export function exerciseMuscleCards(entry,lang){
++ const api=globalThis.HULK_MUSCLES;
++ if(Object.hasOwn(EXERCISES,entry?.id))return api?.cards(entry.id,lang)||'';
++ const groups=entry?.custom?.muscles;
++ const safe=role=>Array.isArray(groups?.[role])?[...new Set(groups[role].filter(k=>MUSCLE_IDS.includes(k)))].slice(0,6):[];
++ const primary=safe('primary'),secondary=safe('secondary'),stabilisers=safe('stabilisers');
++ if(!primary.length||!api?.svg)return '<p class="hf-muscle-note">'+escape(lang==='kn'?'ಸ್ನಾಯು ಚಿತ್ರಕ್ಕಾಗಿ ಮುಖ್ಯ ಸ್ನಾಯು ಆಯ್ಕೆ ಮಾಡಿ.':'Choose a primary muscle to show its muscle picture.')+'</p>';
++ const names=xs=>xs.map(k=>escape(muscleLabel(k,lang))).join(' · ');
++ const figures=(xs,role)=>'<div class="hf-muscle-picture">'+['front','back'].map(view=>'<div class="hf-muscle-view">'+api.svg(view,xs,role)+'<span>'+escape(lang==='kn'?(view==='front'?'ಮುಂಭಾಗ':'ಹಿಂಭಾಗ'):(view==='front'?'Front':'Back'))+'</span></div>').join('')+'</div>';
++ const card=(xs,role)=>'<article class="hf-muscle-card '+(role==='secondary'?'hf-muscle-secondary':'')+'">'+(xs.length?figures(xs,role):'<div class="hf-muscle-empty" aria-hidden="true">—</div>')+'<span class="hf-muscle-role"><i class="hf-muscle-dot"></i>'+escape(lang==='kn'?(role==='primary'?'ಮುಖ್ಯ ಸ್ನಾಯುಗಳು':'ಸಹಾಯಕ ಸ್ನಾಯುಗಳು'):(role==='primary'?'Primary':'Secondary'))+'</span><h4>'+(xs.length?names(xs):escape(lang==='kn'?'ಸಹಾಯಕ ಸ್ನಾಯು ಸೂಚಿಸಿಲ್ಲ':'No secondary group listed'))+'</h4>'+(role==='secondary'&&stabilisers.length?'<p class="hf-muscle-support">'+escape(lang==='kn'?'ಸ್ಥಿರತೆ ನೀಡುವ ಸ್ನಾಯುಗಳು':'Stabilisers')+': '+names(stabilisers)+'</p>':'')+'</article>';
++ return '<section class="hf-muscle-map" data-muscle-map="'+escape(entry.id)+'"><div class="hf-muscle-grid">'+card(primary,'primary')+card(secondary,'secondary')+'</div><p class="hf-muscle-note">'+escape(lang==='kn'?'ಕೋಚ್ ಆಯ್ಕೆ ಮಾಡಿದ ಸ್ನಾಯು ಪ್ರದೇಶಗಳು. ಫಾರ್ಮ್ ಮತ್ತು ಚಲನೆಯ ವ್ಯಾಪ್ತಿಯಿಂದ ಒತ್ತು ಬದಲಾಗುತ್ತದೆ.':'Muscle regions selected by the coach. Emphasis varies with technique and range.')+'</p></section>';
++}
+--- a/public/assets/plan-review.mjs
++++ b/public/assets/plan-review.mjs
+@@ -1,8 +1,9 @@
+-import {planHTML,ptext,days} from './plan-ui.mjs';
++import {planHTML,ptext,days} from './plan-ui.mjs?v=coach-exercises-20261016';
+ import {PLAN_VERSION} from './plan-engine.mjs';
+-import {createLibraryStore} from './studio-library.mjs';
++import {createLibraryStore} from './studio-library.mjs?v=coach-exercises-20261016';
+ const state={},mounts=new WeakMap();
+ const messages={
++ custom_exercise_fields:['The program has an incomplete custom exercise. Edit its name, equipment and primary muscles before assigning.','ಪ್ರೋಗ್ರಾಂನಲ್ಲಿ ಅಪೂರ್ಣ ಸ್ವಂತ ವ್ಯಾಯಾಮ ಇದೆ. ನೀಡುವ ಮೊದಲು ಹೆಸರು, ಉಪಕರಣ ಮತ್ತು ಮುಖ್ಯ ಸ್ನಾಯು ಆಯ್ಕೆ ಪರಿಶೀಲಿಸಿ.'],
+  library_changed:['The series, program or member targets changed. Generate and review a fresh preview.','ಸೀರೀಸ್, ಪ್ರೋಗ್ರಾಂ ಅಥವಾ ಸದಸ್ಯರ ಗುರಿ ಬದಲಾಗಿದೆ. ಹೊಸ ಪ್ರಿವ್ಯೂ ರಚಿಸಿ ಪರಿಶೀಲಿಸಿ.'],
+  program_unpublished:['Publish the series and program before assigning.','ನೀಡುವ ಮೊದಲು ಸೀರೀಸ್ ಮತ್ತು ಪ್ರೋಗ್ರಾಂ ಪ್ರಕಟಿಸಿ.'],program_missing:['This program is unavailable. Choose another published program.','ಈ ಪ್ರೋಗ್ರಾಂ ಲಭ್ಯವಿಲ್ಲ. ಮತ್ತೊಂದು ಪ್ರಕಟಿತ ಪ್ರೋಗ್ರಾಂ ಆಯ್ಕೆ ಮಾಡಿ.'],
+  program_mismatch:['This program does not match the member’s goal, level, equipment or diet. Choose a compatible program.','ಈ ಪ್ರೋಗ್ರಾಂ ಸದಸ್ಯರ ಗುರಿ, ಮಟ್ಟ, ಉಪಕರಣ ಅಥವಾ ಆಹಾರಕ್ಕೆ ಹೊಂದುವುದಿಲ್ಲ. ಹೊಂದುವ ಪ್ರೋಗ್ರಾಂ ಆಯ್ಕೆ ಮಾಡಿ.'],
+--- a/public/assets/plan-ui.mjs
++++ b/public/assets/plan-ui.mjs
+@@ -1,6 +1,6 @@
+ import './muscle-map.js';
+ import {FOODS} from './food-catalog.mjs';
+-import {EXERCISES} from './exercise-catalog.mjs';
++import {definitionForView,exerciseMuscleCards} from './custom-exercises.mjs';
+ export const PLAN_TEXT={
+  title:['My workout & meal plan','ನನ್ನ ವರ್ಕೌಟ್ ಮತ್ತು ಊಟದ ಪ್ಲ್ಯಾನ್'],studioTitle:['Matched workout & meal plan','ಹೊಂದಿಸಿದ ವರ್ಕೌಟ್ ಮತ್ತು ಊಟದ ಪ್ಲ್ಯಾನ್'],
+  pending:['Your coach will review your meals and workout after approving your nutrition targets.','ಪೌಷ್ಟಿಕಾಂಶದ ಗುರಿ ಅನುಮೋದಿಸಿದ ನಂತರ ಕೋಚ್ ಊಟ ಮತ್ತು ವರ್ಕೌಟ್ ಪರಿಶೀಲಿಸುತ್ತಾರೆ.'],
+@@ -45,7 +45,7 @@
+  const t=k=>esc(ptext(k,lang)),s=w.sessions[day];let body='';
+  if(s.kind==='rest')body='<article class="card stack"><h3>'+t('rest')+'</h3><p>'+t('restCopy')+'</p></article>';
+  else if(s.kind==='conditioning')body='<article class="card stack"><h3>'+t('conditioning')+'</h3><p>'+esc(s.minutes)+' '+t('minutes')+'</p><p>'+t('talk_test')+'</p></article>';
+- else body='<p class="hint">'+esc(s.title||ptext(s.type,lang))+' · '+esc(s.estimated_minutes)+' '+t('minutes')+' · '+t('warmup')+' '+esc(s.warmup_minutes)+' / '+t('cooldown')+' '+esc(s.cooldown_minutes)+'</p>'+s.exercises.map((x,i)=>{const ex=EXERCISES[x.id];return '<article class="card stack"><h3>'+esc(ex[lang]||ex.en)+'</h3><p>'+esc(x.sets)+' '+t('sets')+' × '+esc(x.reps)+' '+t('reps')+' · '+esc(x.rest_seconds)+' '+t('seconds')+'</p>'+globalThis.HULK_MUSCLES.cards(x.id,lang)+'<p class="hint">'+t('rir')+': '+esc(x.reps_in_reserve)+'</p><ul>'+ex.cues[lang==='kn'?'kn':'en'].map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>'+(interactive?'<div class="row wrap" aria-label="'+t('tracker')+'">'+Array.from({length:x.sets},(_,set)=>'<button class="btn sm" data-set="'+day+'-'+i+'-'+set+'" aria-pressed="false">'+t('sets')+' '+(set+1)+'</button>').join('')+'</div><button class="btn sm" data-rest="'+x.rest_seconds+'">'+t('timer')+'</button>':'')+'</article>';}).join('');
++ else body='<p class="hint">'+esc(s.title||ptext(s.type,lang))+' · '+esc(s.estimated_minutes)+' '+t('minutes')+' · '+t('warmup')+' '+esc(s.warmup_minutes)+' / '+t('cooldown')+' '+esc(s.cooldown_minutes)+'</p>'+s.exercises.map((x,i)=>{const ex=definitionForView(x);return '<article class="card stack"><h3>'+esc(ex[lang]||ex.en)+'</h3><p>'+esc(x.sets)+' '+t('sets')+' × '+esc(x.reps)+' '+t('reps')+' · '+esc(x.rest_seconds)+' '+t('seconds')+'</p>'+exerciseMuscleCards(x,lang)+'<p class="hint">'+t('rir')+': '+esc(x.reps_in_reserve)+'</p><ul>'+(ex.cues[lang==='kn'&&ex.cues.kn.length?'kn':'en']||[]).map(c=>'<li>'+esc(c)+'</li>').join('')+'</ul>'+(interactive?'<div class="row wrap" aria-label="'+t('tracker')+'">'+Array.from({length:x.sets},(_,set)=>'<button class="btn sm" data-set="'+day+'-'+i+'-'+set+'" aria-pressed="false">'+t('sets')+' '+(set+1)+'</button>').join('')+'</div><button class="btn sm" data-rest="'+x.rest_seconds+'">'+t('timer')+'</button>':'')+'</article>';}).join('');
+  return '<section id="training" class="stack"><h2>'+t('training')+'</h2>'+w.notes.map(k=>'<p class="hint">'+t(k)+'</p>').join('')+body+'<article class="card stack"><p>'+t('effort')+'</p><p>'+t('progress')+'</p><p class="hint">'+t('stop')+'</p>'+(interactive?'<p class="hint">'+t('tracker')+'</p><output id="restTimer" role="timer" aria-live="off"></output>':'')+'</article></section>';
+ }
+ export function programHeader(plan,lang,esc){const p=plan.program;if(!p)return '';const name=lang==='kn'&&p.title_kn||p.title,series=lang==='kn'&&p.series_title_kn||p.series_title;return '<section class="card stack">'+(p.cover_url&&/^https:\/\//.test(p.cover_url)?'<img src="'+esc(p.cover_url)+'" alt="'+esc(series)+'" style="width:100%;max-height:240px;object-fit:cover;filter:grayscale(1);border-radius:12px">':'')+'<span class="label">'+esc(series)+'</span><h2>'+esc(name)+'</h2><p class="hint">'+esc(p.duration_days)+' '+esc(lang==='kn'?'ದಿನಗಳು':'days')+'</p>'+(p.workout_note?'<p style="white-space:pre-wrap">'+esc(ptext('training',lang))+': '+esc(p.workout_note)+'</p>':'')+(p.diet_note?'<p style="white-space:pre-wrap">'+esc(ptext('meals',lang))+': '+esc(p.diet_note)+'</p>':'')+'</section>';};
+--- a/public/assets/plan.mjs
++++ b/public/assets/plan.mjs
+@@ -1,4 +1,4 @@
+-import {planHTML,ptext,days} from './plan-ui.mjs';
++import {planHTML,ptext,days} from './plan-ui.mjs?v=coach-exercises-20261016';
+ const HF=window.HF,view=document.getElementById('view'),esc=HF.esc;
+ let lang=HF.getLang(),assignment=null,status='pending',day=Math.max(0,days.indexOf(new Intl.DateTimeFormat('en-US',{weekday:'long',timeZone:'Asia/Kolkata'}).format(new Date()))),timer=null,remaining=0;
+ const completed=new Set();
+--- a/public/assets/studio-library.mjs
++++ b/public/assets/studio-library.mjs
+@@ -1,8 +1,11 @@
+-import {validateSeries,validateProgram,LIBRARY_VERSION,UUID} from './studio-program-engine.mjs';
++import {validateSeries,validateProgram,LIBRARY_VERSION,UUID} from './studio-program-engine.mjs?v=coach-exercises-20261016';
++import {CUSTOM_ID,MUSCLE_IDS,EQUIPMENT,newCustomDefinition,muscleLabel,exerciseMuscleCards} from './custom-exercises.mjs';
+ import {EXERCISES} from './exercise-catalog.mjs';
+ import {FOODS} from './food-catalog.mjs';
+-import {days,ptext} from './plan-ui.mjs';
++import {days,ptext} from './plan-ui.mjs?v=coach-exercises-20261016';
+ export const TEXT={
++ custom_exercise:['Create my own exercise','ನನ್ನ ಸ್ವಂತ ವ್ಯಾಯಾಮ ರಚಿಸಿ'],custom_name:['Exercise name','ವ್ಯಾಯಾಮದ ಹೆಸರು'],custom_name_kn:['Kannada exercise name (optional)','ಕನ್ನಡ ವ್ಯಾಯಾಮದ ಹೆಸರು (ಐಚ್ಛಿಕ)'],custom_equipment:['Required equipment','ಬೇಕಾದ ಉಪಕರಣ'],choose_equipment:['Choose equipment','ಉಪಕರಣ ಆಯ್ಕೆ ಮಾಡಿ'],equipment_gym:['Gym machine / barbell','ಜಿಮ್ ಯಂತ್ರ / ಬಾರ್ಬೆಲ್'],equipment_dumbbell:['Dumbbells','ಡಂಬೆಲ್ಸ್'],equipment_band:['Resistance band','ರೆಸಿಸ್ಟನ್ಸ್ ಬ್ಯಾಂಡ್'],equipment_bodyweight:['Bodyweight / no equipment','ಬಾಡಿವೇಟ್ / ಉಪಕರಣ ಇಲ್ಲ'],custom_primary:['Primary muscles','ಮುಖ್ಯ ಸ್ನಾಯುಗಳು'],custom_secondary:['Secondary muscles (optional)','ಸಹಾಯಕ ಸ್ನಾಯುಗಳು (ಐಚ್ಛಿಕ)'],custom_stabilisers:['Stabilisers (optional)','ಸ್ಥಿರತೆ ನೀಡುವ ಸ್ನಾಯುಗಳು (ಐಚ್ಛಿಕ)'],choose_muscle:['Choose a muscle to add','ಸ್ನಾಯು ಆಯ್ಕೆ ಮಾಡಿ'],custom_cues:['Coaching notes · one instruction per line','ಕೋಚಿಂಗ್ ಸೂಚನೆಗಳು · ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು'],custom_cues_kn:['Kannada coaching notes (optional)','ಕನ್ನಡ ಕೋಚಿಂಗ್ ಸೂಚನೆಗಳು (ಐಚ್ಛಿಕ)'],custom_exercise_help:['Enter your exercise name, choose its equipment and primary muscles. These details and muscle pictures are saved with this program and the approved member plan.','ವ್ಯಾಯಾಮದ ಹೆಸರು, ಉಪಕರಣ ಮತ್ತು ಮುಖ್ಯ ಸ್ನಾಯು ಆಯ್ಕೆ ಮಾಡಿ. ಈ ವಿವರಗಳು ಮತ್ತು ಸ್ನಾಯು ಚಿತ್ರಗಳು ಪ್ರೋಗ್ರಾಂ ಹಾಗೂ ಅನುಮೋದಿತ ಸದಸ್ಯರ ಪ್ಲ್ಯಾನ್‌ನಲ್ಲಿ ಉಳಿಯುತ್ತವೆ.'],custom_exercise_fields:['Check your custom exercise: name, equipment, primary muscles and coaching notes (up to 6 lines of 300 characters).','ನಿಮ್ಮ ವ್ಯಾಯಾಮದ ಹೆಸರು, ಉಪಕರಣ, ಮುಖ್ಯ ಸ್ನಾಯು ಮತ್ತು ಕೋಚಿಂಗ್ ಸೂಚನೆ ಪರಿಶೀಲಿಸಿ (300 ಅಕ್ಷರಗಳ ಗರಿಷ್ಠ 6 ಸಾಲು).'],
++
+  edit_series:['Edit series','ಸೀರೀಸ್ ಬದಲಾಯಿಸಿ'],edit_program:['Edit program','ಪ್ರೋಗ್ರಾಂ ಬದಲಾಯಿಸಿ'],saved:['Saved','ಉಳಿಸಲಾಗಿದೆ'],
+  conditioning_minutes:['Use 5–60 minutes for a conditioning day.','ಕಂಡೀಷನಿಂಗ್ ದಿನಕ್ಕೆ 5–60 ನಿಮಿಷ ಆಯ್ಕೆ ಮಾಡಿ.'],diet_menus:['Complete both menus A and B.','A ಮತ್ತು B ಎರಡೂ ಮೆನು ಪೂರ್ಣಗೊಳಿಸಿ.'],program_large:['Reduce the program content before saving.','ಉಳಿಸುವ ಮೊದಲು ಪ್ರೋಗ್ರಾಂ ವಿವರ ಕಡಿಮೆ ಮಾಡಿ.'],
+  fat_loss:['Fat loss','ಕೊಬ್ಬು ಕಡಿಮೆ'],weight_loss:['Weight loss','ತೂಕ ಕಡಿಮೆ'],weight_gain:['Weight gain','ತೂಕ ಹೆಚ್ಚಳ'],muscle_gain:['Muscle gain','ಸ್ನಾಯು ಹೆಚ್ಚಳ'],maintenance:['Maintain fitness','ಫಿಟ್ನೆಸ್ ಕಾಪಾಡಿ'],recomp:['Body recomposition','ದೇಹದ ಸಂಯೋಜನೆ ಬದಲಾವಣೆ'],beginner:['Beginner','ಆರಂಭಿಕ'],intermediate:['Intermediate','ಮಧ್ಯಮ'],advanced:['Advanced','ಮುಂದುವರಿದ'],gym:['Gym','ಜಿಮ್'],basic:['Basic home kit','ಮನೆಯ ಮೂಲ ಉಪಕರಣ'],bodyweight:['Bodyweight','ಬಾಡಿವೇಟ್'],veg:['Vegetarian','ಸಸ್ಯಾಹಾರ'],egg:['Vegetarian + egg','ಸಸ್ಯಾಹಾರ + ಮೊಟ್ಟೆ'],nonveg:['Non-vegetarian','ಮಾಂಸಾಹಾರ'],
+@@ -13,7 +16,7 @@
+  cover:['Cover photo','ಕವರ್ ಚಿತ್ರ'],cover_help:['Upload your own JPG, PNG or WebP photo (up to 5 MB). Covers display in black and white.','ನಿಮ್ಮ JPG, PNG ಅಥವಾ WebP ಚಿತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ (5 MB ವರೆಗೆ). ಕವರ್ ಕಪ್ಪು-ಬಿಳಿಯಲ್ಲಿ ಕಾಣುತ್ತದೆ.'],remove_cover:['Remove cover from series','ಸೀರೀಸ್ ಕವರ್ ತೆಗೆದುಹಾಕಿ'],
+  duration:['Duration in days','ಒಟ್ಟು ದಿನಗಳು'],goal:['Goal','ಗುರಿ'],experience:['Training level','ತರಬೇತಿ ಮಟ್ಟ'],equipment:['Equipment','ಉಪಕರಣ'],diet:['Diet preference','ಆಹಾರ ಆಯ್ಕೆ'],any:['Any / personalise to member','ಸದಸ್ಯರಿಗೆ ತಕ್ಕಂತೆ'],
+  workout:['Workout template','ವರ್ಕೌಟ್ ಟೆಂಪ್ಲೇಟ್'],automatic:['Personalise from member quiz','ಸದಸ್ಯರ ಕ್ವಿಜ್‌ಗೆ ತಕ್ಕಂತೆ ರಚಿಸಿ'],custom:['Coach-built template','ಕೋಚ್ ರಚಿಸಿದ ಟೆಂಪ್ಲೇಟ್'],workout_note:['Workout guidance','ವರ್ಕೌಟ್ ಸೂಚನೆ'],diet_note:['Diet guidance','ಡಯಟ್ ಸೂಚನೆ'],
+- rest:['Rest','ವಿಶ್ರಾಂತಿ'],strength:['Strength','ಶಕ್ತಿ ವ್ಯಾಯಾಮ'],conditioning:['Conditioning','ಕಂಡೀಷನಿಂಗ್'],session_title:['Day title','ದಿನದ ಹೆಸರು'],minutes:['Minutes','ನಿಮಿಷಗಳು'],add_exercise:['Add exercise','ವ್ಯಾಯಾಮ ಸೇರಿಸಿ'],remove:['Remove','ತೆಗೆದುಹಾಕಿ'],up:['Move up','ಮೇಲಕ್ಕೆ'],down:['Move down','ಕೆಳಕ್ಕೆ'],sets:['Sets','ಸೆಟ್‌ಗಳು'],reps:['Reps','ರೆಪ್‌ಗಳು'],rest_seconds:['Rest seconds','ವಿಶ್ರಾಂತಿ ಸೆಕೆಂಡ್‌ಗಳು'],rir:['Reps in reserve','ಉಳಿಸುವ ರೆಪ್‌ಗಳು'],
++ rest:['Rest','ವಿಶ್ರಾಂತಿ'],strength:['Strength','ಶಕ್ತಿ ವ್ಯಾಯಾಮ'],conditioning:['Conditioning','ಕಂಡೀಷನಿಂಗ್'],session_title:['Day title','ದಿನದ ಹೆಸರು'],minutes:['Minutes','ನಿಮಿಷಗಳು'],add_exercise:['Choose from existing list','ಇರುವ ಪಟ್ಟಿಯಿಂದ ವ್ಯಾಯಾಮ ಆಯ್ಕೆ ಮಾಡಿ'],remove:['Remove','ತೆಗೆದುಹಾಕಿ'],up:['Move up','ಮೇಲಕ್ಕೆ'],down:['Move down','ಕೆಳಕ್ಕೆ'],sets:['Sets','ಸೆಟ್‌ಗಳು'],reps:['Reps','ರೆಪ್‌ಗಳು'],rest_seconds:['Rest seconds','ವಿಶ್ರಾಂತಿ ಸೆಕೆಂಡ್‌ಗಳು'],rir:['Reps in reserve','ಉಳಿಸುವ ರೆಪ್‌ಗಳು'],
+  personalised:['Match approved member targets','ಸದಸ್ಯರ ಅನುಮೋದಿತ ಗುರಿಗೆ ಹೊಂದಿಸಿ'],custom_meals:['Coach-built menus A / B','ಕೋಚ್ ರಚಿಸಿದ A / B ಊಟ'],meal_help:['Reference portions are scaled to the member’s approved calories. Macro mismatch, allergies or portion limits prevent approval.','ಪ್ರಮಾಣಗಳನ್ನು ಅನುಮೋದಿತ ಕ್ಯಾಲೊರಿಗೆ ಹೊಂದಿಸಲಾಗುತ್ತದೆ. ಗುರಿ ಹೊಂದದಿದ್ದರೆ, ಅಲರ್ಜಿ ಅಥವಾ ಪ್ರಮಾಣದ ಸಮಸ್ಯೆ ಇದ್ದರೆ ಅನುಮೋದಿಸಲಾಗುವುದಿಲ್ಲ.'],
+  add_meal:['Add meal','ಊಟ ಸೇರಿಸಿ'],add_food:['Add ingredient','ಆಹಾರ ಸೇರಿಸಿ'],grams:['Grams','ಗ್ರಾಂ'],meal_name:['Meal name','ಊಟದ ಹೆಸರು'],
+  empty:['No programs here yet. Add your first program.','ಇಲ್ಲಿ ಇನ್ನೂ ಪ್ರೋಗ್ರಾಂ ಇಲ್ಲ. ಮೊದಲ ಪ್ರೋಗ್ರಾಂ ಸೇರಿಸಿ.'],programs:['Programs','ಪ್ರೋಗ್ರಾಂಗಳು'],open:['Open programs','ಪ್ರೋಗ್ರಾಂ ನೋಡಿ'],review:['Review and assign to a member','ಸದಸ್ಯರಿಗೆ ಪರಿಶೀಲಿಸಿ ನೀಡಿ'],
+@@ -55,7 +58,14 @@
+  const cover=(s)=>{const src=store.coverURL(s.cover_path);return src?'<img class="lib-cover" src="'+esc(src)+'" alt="'+esc(s.title)+'">':'<div class="lib-cover lib-cover-empty" aria-hidden="true">'+esc(s.title)+'</div>';};
+  function capture(){if(!draft)return;el.querySelectorAll('[data-field]').forEach(n=>{draft[n.dataset.field]=n.type==='number'?Number(n.value):n.value;});el.querySelectorAll('[data-guide]').forEach(n=>{draft.content[n.dataset.guide].note=n.value;});remember();}
+  async function load(){const token=++generation;el.innerHTML='<p role="status">'+t('loading')+'</p>';try{data=await store.list();if(!live()||token!==generation)return;if(selected&&!data.series.some(s=>s.id===selected))selected=null;error='';paint();}catch(e){if(!live()||token!==generation)return;el.innerHTML='<section class="card stack"><p role="alert">'+esc(errorText(e.message,lang))+'</p><button class="btn" data-lib-retry>'+t('refresh')+'</button></section>';el.querySelector('[data-lib-retry]').onclick=load;}}
+- function workoutEditor(){const w=draft.content.workout,s=w.sessions[day];return '<section class="lib-builder"><h3>'+t('workout')+'</h3><p class="hint">'+t('workout_help')+'</p><select class="input" data-workout-mode>'+options(['automatic','custom'],w.mode)+'</select><label class="lib-field">'+t('workout_note')+'<textarea class="input" data-guide="workout" maxlength="1000">'+esc(w.note)+'</textarea></label>'+(w.mode==='automatic'?'<button type="button" class="btn" data-build-manual>'+t('build_manual')+'</button>':'')+(w.mode==='custom'?'<div class="lib-day-tabs">'+days.map((d,i)=>'<button type="button" class="btn sm" data-workout-day="'+i+'" aria-pressed="'+(i===day)+'">'+esc(ptext(d,lang))+'</button>').join('')+'</div><div class="lib-grid"><label class="lib-field">'+t('day_type')+'<select class="input" data-session-kind>'+options(['rest','strength','conditioning'],s.kind)+'</select></label><label class="lib-field">'+t('session_title')+'<input class="input" data-session-title maxlength="100" value="'+esc(s.title)+'"></label></div>'+(s.kind==='conditioning'?'<label class="lib-field">'+t('minutes')+'<input class="input" data-conditioning type="number" min="5" max="60" value="'+s.minutes+'"></label>':s.kind==='strength'?s.exercises.map((e,i)=>'<article class="lib-exercise"><label class="lib-field">'+t('exercise')+'<select class="input" data-exercise="'+i+'" data-ex-key="id">'+options(Object.keys(EXERCISES),e.id,k=>EXERCISES[k][lang]||EXERCISES[k].en)+'</select></label><div class="lib-grid four">'+[['sets','sets',1,6],['reps','reps',null,null],['rest_seconds','rest_seconds',30,300],['reps_in_reserve','rir',1,4]].map(([key,label,min,max])=>'<label class="lib-field">'+t(label)+'<input class="input" data-exercise="'+i+'" data-ex-key="'+key+'" type="'+(min?'number':'text')+'" '+(min?'min="'+min+'" max="'+max+'"':'maxlength="25"')+' value="'+esc(e[key])+'"></label>').join('')+'</div>'+globalThis.HULK_MUSCLES.cards(e.id,lang)+'<div class="row wrap"><button type="button" class="btn sm" data-ex-move="'+i+'" data-direction="-1">'+t('up')+'</button><button type="button" class="btn sm" data-ex-move="'+i+'" data-direction="1">'+t('down')+'</button><button type="button" class="btn sm" data-ex-remove="'+i+'">'+t('remove')+'</button></div></article>').join(''):'')+'<button type="button" class="btn acc" data-ex-add>'+t(s.kind==='strength'?'add_exercise':'add_strength_exercise')+'</button>':'')+'</section>';}
++
++ function customEditor(e,index){
++  if(!e.custom)return '';const c=e.custom;
++  const textField=(key,label)=>'<label class="lib-field">'+t(label)+'<input class="input" data-custom-ex="'+index+'" data-custom-key="'+key+'" maxlength="120" value="'+esc(c[key])+'"></label>';
++  const muscles=role=>'<div class="stack"><label class="lib-field">'+t('custom_'+role)+'<select class="input" data-muscle-add="'+index+'" data-muscle-role="'+role+'"><option value="">'+t('choose_muscle')+'</option>'+options(MUSCLE_IDS,'',k=>muscleLabel(k,lang))+'</select></label><div class="row wrap">'+c.muscles[role].map(k=>'<button type="button" class="btn sm" data-muscle-remove="'+index+'" data-muscle-role="'+role+'" data-muscle="'+k+'" aria-label="'+esc(libraryText('remove',lang)+' '+muscleLabel(k,lang))+'">'+esc(muscleLabel(k,lang))+' ×</button>').join('')+'</div></div>';
++  return '<section class="lib-builder"><p class="hint">'+t('custom_exercise_help')+'</p><div class="lib-grid">'+textField('en','custom_name')+textField('kn','custom_name_kn')+'</div><label class="lib-field">'+t('custom_equipment')+'<select class="input" data-custom-ex="'+index+'" data-custom-key="equipment"><option value="">'+t('choose_equipment')+'</option>'+options(EQUIPMENT,c.equipment,k=>libraryText('equipment_'+k,lang))+'</select></label>'+['primary','secondary','stabilisers'].map(muscles).join('')+'<div class="lib-grid">'+['en','kn'].map(code=>'<label class="lib-field">'+t(code==='en'?'custom_cues':'custom_cues_kn')+'<textarea class="input" data-custom-ex="'+index+'" data-custom-key="cues_'+code+'" maxlength="1806" rows="3">'+esc(c.cues[code].join('\n'))+'</textarea></label>').join('')+'</div></section>';
++ }
++ function workoutEditor(){const w=draft.content.workout,s=w.sessions[day];return '<section class="lib-builder"><h3>'+t('workout')+'</h3><p class="hint">'+t('workout_help')+'</p><select class="input" data-workout-mode>'+options(['automatic','custom'],w.mode)+'</select><label class="lib-field">'+t('workout_note')+'<textarea class="input" data-guide="workout" maxlength="1000">'+esc(w.note)+'</textarea></label>'+(w.mode==='automatic'?'<button type="button" class="btn" data-build-manual>'+t('build_manual')+'</button>':'')+(w.mode==='custom'?'<div class="lib-day-tabs">'+days.map((d,i)=>'<button type="button" class="btn sm" data-workout-day="'+i+'" aria-pressed="'+(i===day)+'">'+esc(ptext(d,lang))+'</button>').join('')+'</div><div class="lib-grid"><label class="lib-field">'+t('day_type')+'<select class="input" data-session-kind>'+options(['rest','strength','conditioning'],s.kind)+'</select></label><label class="lib-field">'+t('session_title')+'<input class="input" data-session-title maxlength="100" value="'+esc(s.title)+'"></label></div>'+(s.kind==='conditioning'?'<label class="lib-field">'+t('minutes')+'<input class="input" data-conditioning type="number" min="5" max="60" value="'+s.minutes+'"></label>':s.kind==='strength'?s.exercises.map((e,i)=>'<article class="lib-exercise"><label class="lib-field">'+t('exercise')+'<select class="input" data-exercise="'+i+'" data-ex-key="id">'+options(['__custom__',...Object.keys(EXERCISES)],CUSTOM_ID.test(e.id)?'__custom__':e.id,k=>k==='__custom__'?libraryText('custom_exercise',lang):(EXERCISES[k][lang]||EXERCISES[k].en))+'</select></label>'+customEditor(e,i)+'<div class="lib-grid four">'+[['sets','sets',1,6],['reps','reps',null,null],['rest_seconds','rest_seconds',30,300],['reps_in_reserve','rir',1,4]].map(([key,label,min,max])=>'<label class="lib-field">'+t(label)+'<input class="input" data-exercise="'+i+'" data-ex-key="'+key+'" type="'+(min?'number':'text')+'" '+(min?'min="'+min+'" max="'+max+'"':'maxlength="25"')+' value="'+esc(e[key])+'"></label>').join('')+'</div>'+exerciseMuscleCards(e,lang)+'<div class="row wrap"><button type="button" class="btn sm" data-ex-move="'+i+'" data-direction="-1">'+t('up')+'</button><button type="button" class="btn sm" data-ex-move="'+i+'" data-direction="1">'+t('down')+'</button><button type="button" class="btn sm" data-ex-remove="'+i+'">'+t('remove')+'</button></div></article>').join(''):'')+'<div class="row wrap"><button type="button" class="btn acc" data-ex-create>'+t('custom_exercise')+'</button><button type="button" class="btn" data-ex-add>'+t(s.kind==='strength'?'add_exercise':'add_strength_exercise')+'</button></div>':'')+'</section>';}
+  function dietEditor(){const d=draft.content.diet,m=d.menus.find(m=>m.id===menu);return '<section class="lib-builder"><h3>'+t('diet')+'</h3><select class="input" data-diet-mode>'+options(['personalized','custom'],d.mode,k=>libraryText(k==='personalized'?'personalised':'custom_meals',lang))+'</select><label class="lib-field">'+t('diet_note')+'<textarea class="input" data-guide="diet" maxlength="1000">'+esc(d.note)+'</textarea></label>'+(d.mode==='custom'?'<p class="hint">'+t('meal_help')+'</p><div class="row"><button type="button" class="btn sm" data-menu="A" aria-pressed="'+(menu==='A')+'">Menu A</button><button type="button" class="btn sm" data-menu="B" aria-pressed="'+(menu==='B')+'">Menu B</button></div>'+m.meals.map((meal,i)=>'<article class="lib-meal"><div class="lib-grid"><label class="lib-field">'+t('meal_name')+'<input class="input" data-meal="'+i+'" data-meal-key="title" maxlength="100" value="'+esc(meal.title)+'"></label><label class="lib-field">'+t('status')+'<select class="input" data-meal="'+i+'" data-meal-key="slot">'+options(['breakfast','lunch','snack','dinner','lateSnack','meal1','meal2'],meal.slot,k=>ptext(k,lang))+'</select></label></div>'+meal.ingredients.map((item,j)=>'<div class="lib-food"><label class="lib-field">'+t('diet')+'<select class="input" data-food-meal="'+i+'" data-food-index="'+j+'" data-food-key="food_id">'+options(Object.keys(FOODS),item.food_id,k=>(FOODS[k][lang]||FOODS[k].en)+' · '+ptext(FOODS[k].state,lang))+'</select></label><label class="lib-field">'+t('grams')+'<input class="input" data-food-meal="'+i+'" data-food-index="'+j+'" data-food-key="grams" type="number" min="0.1" max="1000" step="0.1" value="'+item.grams+'"></label><button type="button" class="btn sm" data-food-remove="'+i+'-'+j+'">'+t('remove')+'</button></div>').join('')+'<div class="row wrap"><button type="button" class="btn sm" data-food-add="'+i+'">'+t('add_food')+'</button><button type="button" class="btn sm" data-meal-remove="'+i+'">'+t('remove')+'</button></div></article>').join('')+'<button type="button" class="btn" data-meal-add>'+t('add_meal')+'</button>':'')+'</section>';}
+  function paint(){
+   remember();let html='<div class="lib-page stack-lg"><div class="row between wrap"><div><span class="label">OWNER STUDIO</span><h1 class="display h-lg">'+t('title')+'</h1></div><button type="button" class="btn sm" data-lib-refresh>'+t('refresh')+'</button></div><p class="hint">'+t('intro')+'</p>';
+@@ -84,8 +94,13 @@
+    on('[data-workout-day]',n=>{capture();day=Number(n.dataset.workoutDay);paint();});on('[data-menu]',n=>{capture();menu=n.dataset.menu;paint();});
+    on('[data-session-kind]',n=>{capture();w.sessions[day].kind=n.value;paint();},'change');on('[data-session-title]',n=>{w.sessions[day].title=n.value;remember();},'input');on('[data-conditioning]',n=>{w.sessions[day].minutes=Number(n.value);remember();},'input');
+    on('[data-ex-add]',()=>{capture();w.sessions[day].kind='strength';if(w.sessions[day].exercises.length<12)w.sessions[day].exercises.push({id:'squat',sets:2,reps:'8–12',rest_seconds:75,reps_in_reserve:3});paint();});
+-   on('[data-exercise]',n=>{const e=w.sessions[day].exercises[Number(n.dataset.exercise)],k=n.dataset.exKey;e[k]=n.type==='number'?Number(n.value):n.value;remember();if(k==='id'){capture();paint();}},'change');
+-   on('[data-exercise]',n=>{const e=w.sessions[day].exercises[Number(n.dataset.exercise)],k=n.dataset.exKey;e[k]=n.type==='number'?Number(n.value):n.value;remember();},'input');
++   on('[data-ex-create]',()=>{capture();const s=w.sessions[day];s.kind='strength';if(s.exercises.length<12)s.exercises.push({id:'custom_'+crypto.randomUUID(),custom:newCustomDefinition(),sets:2,reps:'8–12',rest_seconds:75,reps_in_reserve:3});paint();});
++   on('[data-exercise]',n=>{const e=w.sessions[day].exercises[Number(n.dataset.exercise)],k=n.dataset.exKey;if(k==='id'){capture();if(n.value==='__custom__'){if(!CUSTOM_ID.test(e.id)||!e.custom){e.id='custom_'+crypto.randomUUID();e.custom=newCustomDefinition();}}else if(Object.hasOwn(EXERCISES,n.value)){e.id=n.value;delete e.custom;}paint();return;}e[k]=n.type==='number'?Number(n.value):n.value;remember();},'change');
++   const customInput=n=>{const c=w.sessions[day].exercises[Number(n.dataset.customEx)]?.custom;if(!c)return;const key=n.dataset.customKey;if(key==='cues_en'||key==='cues_kn')c.cues[key.slice(5)]=n.value.split('\n').map(x=>x.trim()).filter(Boolean);else if(['en','kn','equipment'].includes(key))c[key]=n.value;remember();};
++   on('[data-custom-ex]',customInput,'input');on('[data-custom-ex]',customInput,'change');
++   on('[data-muscle-add]',n=>{capture();const c=w.sessions[day].exercises[Number(n.dataset.muscleAdd)]?.custom,key=n.value,role=n.dataset.muscleRole;if(!c||!MUSCLE_IDS.includes(key)||!['primary','secondary','stabilisers'].includes(role))return;if(c.muscles[role].length<6){for(const r of ['primary','secondary','stabilisers'])c.muscles[r]=c.muscles[r].filter(x=>x!==key);c.muscles[role].push(key);}paint();},'change');
++   on('[data-muscle-remove]',n=>{capture();const c=w.sessions[day].exercises[Number(n.dataset.muscleRemove)]?.custom,role=n.dataset.muscleRole;if(c&&['primary','secondary','stabilisers'].includes(role))c.muscles[role]=c.muscles[role].filter(k=>k!==n.dataset.muscle);paint();});
++   on('[data-exercise]',n=>{const e=w.sessions[day].exercises[Number(n.dataset.exercise)],k=n.dataset.exKey;if(k==='id')return;e[k]=n.type==='number'?Number(n.value):n.value;remember();},'input');
+    on('[data-ex-remove]',n=>{capture();w.sessions[day].exercises.splice(Number(n.dataset.exRemove),1);paint();});on('[data-ex-move]',n=>{capture();const xs=w.sessions[day].exercises,i=Number(n.dataset.exMove),j=i+Number(n.dataset.direction);if(j>=0&&j<xs.length)[xs[i],xs[j]]=[xs[j],xs[i]];paint();});
+    const meals=()=>d.menus.find(m=>m.id===menu).meals;
+    on('[data-meal-add]',()=>{capture();if(meals().length<5)meals().push({slot:'lateSnack',title:'New meal',ingredients:[]});paint();});on('[data-meal-remove]',n=>{capture();if(meals().length>2)meals().splice(Number(n.dataset.mealRemove),1);paint();});
+--- a/public/assets/studio-program-engine.mjs
++++ b/public/assets/studio-program-engine.mjs
+@@ -1,6 +1,7 @@
+ import {assertPlanEligibility,buildWorkout,buildMeals,sumNutrition,PLAN_VERSION} from './plan-engine.mjs';
+ import {FOODS,FOOD_VERSION} from './food-catalog.mjs';
+ import {EXERCISES,EXERCISE_VERSION} from './exercise-catalog.mjs';
++import {validateExerciseDefinition,copyCustomDefinition} from './custom-exercises.mjs';
+ export const LIBRARY_VERSION='hulk-studio-library-1.0.0';
+ export const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+ const goals=['any','weight_gain','muscle_gain','maintenance','fat_loss','weight_loss','recomp'];
+@@ -27,7 +28,7 @@
+    if(s.kind==='conditioning'){if(!int(s.minutes,5,60))fail('conditioning_minutes');continue;}
+    strength++;
+    if(!Array.isArray(s.exercises)||s.exercises.length>12||(strict&&!s.exercises.length))fail('exercise_missing');
+-   for(const e of s.exercises){if(!obj(e)||!EXERCISES[e.id]||!int(e.sets,1,6)||!validReps(e.reps)||!int(e.rest_seconds,30,300)||!int(e.reps_in_reserve,1,4))fail('exercise_fields');}
++   for(const e of s.exercises){if(!obj(e)||!int(e.sets,1,6)||!validReps(e.reps)||!int(e.rest_seconds,30,300)||!int(e.reps_in_reserve,1,4))fail('exercise_fields');validateExerciseDefinition(e,strict);}
+   }
+   if(strict&&(!strength||training>6))fail('workout_days');
+  }
+@@ -51,7 +52,7 @@
+   if(s.kind==='rest')return {day:s.day,kind:'rest'};training++;
+   if(s.kind==='conditioning'){if(s.minutes>a.session_minutes)fail('session_review');return {day:s.day,kind:'conditioning',title:s.title,minutes:s.minutes,intensity:'talk_test'};}
+   strength++;let time=7;
+-  const exercises=s.exercises.map(e=>{if(!allowed.includes(EXERCISES[e.id].equipment))fail('program_equipment');time+=(e.sets*45+(e.sets-1)*e.rest_seconds+45)/60;return {...e,pattern:'owner_selection'};});
++  const exercises=s.exercises.map(e=>{const definition=validateExerciseDefinition(e,true);if(!allowed.includes(definition.equipment))fail('program_equipment');time+=(e.sets*45+(e.sets-1)*e.rest_seconds+45)/60;return {id:e.id,sets:e.sets,reps:e.reps,rest_seconds:e.rest_seconds,reps_in_reserve:e.reps_in_reserve,pattern:'owner_selection',...(e.custom?{custom:copyCustomDefinition(definition)}:{})};});
+   if(time>a.session_minutes)fail('session_review');
+   return {day:s.day,kind:'strength',type:'full_a',title:s.title,estimated_minutes:Math.ceil(time),warmup_minutes:5,cooldown_minutes:2,exercises};
+  }).sort((a,b)=>a.day-b.day);
+--- a/public/assets/studio.mjs
++++ b/public/assets/studio.mjs
+@@ -1,5 +1,5 @@
+-import {mountPlanReviews} from './plan-review.mjs';
+-import {mountStudioLibrary} from './studio-library.mjs?v=workout-actions-20261015';
++import {mountPlanReviews} from './plan-review.mjs?v=coach-exercises-20261016';
++import {mountStudioLibrary} from './studio-library.mjs?v=coach-exercises-20261016';
+ import { tr, resultHTML } from './intake-ui.mjs';
+ import { canReviewTargets,validateReviewedTargets,reviewLabel } from './reviewed-targets.mjs';
+ const HF=window.HF,sb=HF.sb,esc=HF.esc,view=document.getElementById('view');
+--- a/supabase/functions/_shared/studio-program-engine.mjs
++++ b/supabase/functions/_shared/studio-program-engine.mjs
+@@ -1,6 +1,7 @@
+ import {assertPlanEligibility,buildWorkout,buildMeals,sumNutrition,PLAN_VERSION} from './plan-engine.mjs';
+ import {FOODS,FOOD_VERSION} from './food-catalog.mjs';
+ import {EXERCISES,EXERCISE_VERSION} from './exercise-catalog.mjs';
++import {validateExerciseDefinition,copyCustomDefinition} from './custom-exercises.mjs';
+ export const LIBRARY_VERSION='hulk-studio-library-1.0.0';
+ export const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+ const goals=['any','weight_gain','muscle_gain','maintenance','fat_loss','weight_loss','recomp'];
+@@ -27,7 +28,7 @@
+    if(s.kind==='conditioning'){if(!int(s.minutes,5,60))fail('conditioning_minutes');continue;}
+    strength++;
+    if(!Array.isArray(s.exercises)||s.exercises.length>12||(strict&&!s.exercises.length))fail('exercise_missing');
+-   for(const e of s.exercises){if(!obj(e)||!EXERCISES[e.id]||!int(e.sets,1,6)||!validReps(e.reps)||!int(e.rest_seconds,30,300)||!int(e.reps_in_reserve,1,4))fail('exercise_fields');}
++   for(const e of s.exercises){if(!obj(e)||!int(e.sets,1,6)||!validReps(e.reps)||!int(e.rest_seconds,30,300)||!int(e.reps_in_reserve,1,4))fail('exercise_fields');validateExerciseDefinition(e,strict);}
+   }
+   if(strict&&(!strength||training>6))fail('workout_days');
+  }
+@@ -51,7 +52,7 @@
+   if(s.kind==='rest')return {day:s.day,kind:'rest'};training++;
+   if(s.kind==='conditioning'){if(s.minutes>a.session_minutes)fail('session_review');return {day:s.day,kind:'conditioning',title:s.title,minutes:s.minutes,intensity:'talk_test'};}
+   strength++;let time=7;
+-  const exercises=s.exercises.map(e=>{if(!allowed.includes(EXERCISES[e.id].equipment))fail('program_equipment');time+=(e.sets*45+(e.sets-1)*e.rest_seconds+45)/60;return {...e,pattern:'owner_selection'};});
++  const exercises=s.exercises.map(e=>{const definition=validateExerciseDefinition(e,true);if(!allowed.includes(definition.equipment))fail('program_equipment');time+=(e.sets*45+(e.sets-1)*e.rest_seconds+45)/60;return {id:e.id,sets:e.sets,reps:e.reps,rest_seconds:e.rest_seconds,reps_in_reserve:e.reps_in_reserve,pattern:'owner_selection',...(e.custom?{custom:copyCustomDefinition(definition)}:{})};});
+   if(time>a.session_minutes)fail('session_review');
+   return {day:s.day,kind:'strength',type:'full_a',title:s.title,estimated_minutes:Math.ceil(time),warmup_minutes:5,cooldown_minutes:2,exercises};
+  }).sort((a,b)=>a.day-b.day);
+--- a/supabase/functions/_shared/custom-exercises.mjs
++++ b/supabase/functions/_shared/custom-exercises.mjs
+@@ -0,0 +1,43 @@
++import {EXERCISES} from './exercise-catalog.mjs';
++
++export const CUSTOM_EXERCISE_VERSION='hulk-coach-exercise-1.0.0';
++export const CUSTOM_ID=/^custom_[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
++export const MUSCLE_IDS=Object.freeze(['chest','front_delts','side_delts','rear_delts','lats','upper_back','lower_back','biceps','triceps','forearms','rotator_cuff','core','obliques','serratus','quads','hamstrings','glutes','adductors','calves','hip_flexors']);
++export const EQUIPMENT=Object.freeze(['gym','dumbbell','band','bodyweight']);
++const roles=['primary','secondary','stabilisers'];
++const object=v=>v&&typeof v==='object'&&!Array.isArray(v);
++const text=(v,min,max)=>typeof v==='string'&&v.trim().length>=min&&v.length<=max;
++function fail(){const e=new Error('custom_exercise_fields');e.code=e.message;throw e;}
++export function newCustomDefinition(){return {version:CUSTOM_EXERCISE_VERSION,en:'',kn:'',equipment:'',cues:{en:[],kn:[]},muscles:{primary:[],secondary:[],stabilisers:[]}};}
++export function validateExerciseDefinition(entry,strict=true){
++ if(!object(entry))fail();
++ if(Object.hasOwn(EXERCISES,entry.id)){if(entry.custom!==undefined)fail();return EXERCISES[entry.id];}
++ if(!CUSTOM_ID.test(entry.id||'')||!object(entry.custom))fail();
++ const c=entry.custom;
++ if(c.version!==CUSTOM_EXERCISE_VERSION||!text(c.en,strict?2:0,120)||!text(c.kn,0,120)||(!EQUIPMENT.includes(c.equipment)&&(strict||c.equipment!=='')))fail();
++ if(Object.keys(c).some(k=>!['version','en','kn','equipment','cues','muscles'].includes(k))||!object(c.cues)||!object(c.muscles))fail();
++ for(const lang of ['en','kn'])if(!Array.isArray(c.cues[lang])||c.cues[lang].length>6||c.cues[lang].some(s=>!text(s,1,300)))fail();
++ for(const role of roles){const group=c.muscles[role];if(!Array.isArray(group)||group.length>6||(strict&&role==='primary'&&!group.length)||group.some(k=>!MUSCLE_IDS.includes(k)))fail();}
++ const all=roles.flatMap(role=>c.muscles[role]);if(new Set(all).size!==all.length)fail();
++ if(JSON.stringify(c).length>8000)fail();
++ return c;
++}
++export function copyCustomDefinition(c){return {version:CUSTOM_EXERCISE_VERSION,en:c.en.trim(),kn:c.kn.trim(),equipment:c.equipment,cues:{en:[...c.cues.en],kn:[...c.cues.kn]},muscles:Object.fromEntries(roles.map(role=>[role,[...c.muscles[role]]]))};}
++export function definitionForView(entry){
++ if(Object.hasOwn(EXERCISES,entry?.id))return EXERCISES[entry.id];
++ try{return validateExerciseDefinition(entry,true);}catch{return {en:'Exercise · coach review needed',kn:'ವ್ಯಾಯಾಮ · ಕೋಚ್ ಪರಿಶೀಲನೆ ಬೇಕು',equipment:'',cues:{en:[],kn:[]}};}
++}
++const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
++export function muscleLabel(id,lang){const labels=globalThis.HULK_MUSCLES?.labels?.[id];return labels?labels[lang==='kn'?1:0]:id.replaceAll('_',' ');}
++export function exerciseMuscleCards(entry,lang){
++ const api=globalThis.HULK_MUSCLES;
++ if(Object.hasOwn(EXERCISES,entry?.id))return api?.cards(entry.id,lang)||'';
++ const groups=entry?.custom?.muscles;
++ const safe=role=>Array.isArray(groups?.[role])?[...new Set(groups[role].filter(k=>MUSCLE_IDS.includes(k)))].slice(0,6):[];
++ const primary=safe('primary'),secondary=safe('secondary'),stabilisers=safe('stabilisers');
++ if(!primary.length||!api?.svg)return '<p class="hf-muscle-note">'+escape(lang==='kn'?'ಸ್ನಾಯು ಚಿತ್ರಕ್ಕಾಗಿ ಮುಖ್ಯ ಸ್ನಾಯು ಆಯ್ಕೆ ಮಾಡಿ.':'Choose a primary muscle to show its muscle picture.')+'</p>';
++ const names=xs=>xs.map(k=>escape(muscleLabel(k,lang))).join(' · ');
++ const figures=(xs,role)=>'<div class="hf-muscle-picture">'+['front','back'].map(view=>'<div class="hf-muscle-view">'+api.svg(view,xs,role)+'<span>'+escape(lang==='kn'?(view==='front'?'ಮುಂಭಾಗ':'ಹಿಂಭಾಗ'):(view==='front'?'Front':'Back'))+'</span></div>').join('')+'</div>';
++ const card=(xs,role)=>'<article class="hf-muscle-card '+(role==='secondary'?'hf-muscle-secondary':'')+'">'+(xs.length?figures(xs,role):'<div class="hf-muscle-empty" aria-hidden="true">—</div>')+'<span class="hf-muscle-role"><i class="hf-muscle-dot"></i>'+escape(lang==='kn'?(role==='primary'?'ಮುಖ್ಯ ಸ್ನಾಯುಗಳು':'ಸಹಾಯಕ ಸ್ನಾಯುಗಳು'):(role==='primary'?'Primary':'Secondary'))+'</span><h4>'+(xs.length?names(xs):escape(lang==='kn'?'ಸಹಾಯಕ ಸ್ನಾಯು ಸೂಚಿಸಿಲ್ಲ':'No secondary group listed'))+'</h4>'+(role==='secondary'&&stabilisers.length?'<p class="hf-muscle-support">'+escape(lang==='kn'?'ಸ್ಥಿರತೆ ನೀಡುವ ಸ್ನಾಯುಗಳು':'Stabilisers')+': '+names(stabilisers)+'</p>':'')+'</article>';
++ return '<section class="hf-muscle-map" data-muscle-map="'+escape(entry.id)+'"><div class="hf-muscle-grid">'+card(primary,'primary')+card(secondary,'secondary')+'</div><p class="hf-muscle-note">'+escape(lang==='kn'?'ಕೋಚ್ ಆಯ್ಕೆ ಮಾಡಿದ ಸ್ನಾಯು ಪ್ರದೇಶಗಳು. ಫಾರ್ಮ್ ಮತ್ತು ಚಲನೆಯ ವ್ಯಾಪ್ತಿಯಿಂದ ಒತ್ತು ಬದಲಾಗುತ್ತದೆ.':'Muscle regions selected by the coach. Emphasis varies with technique and range.')+'</p></section>';
++}
